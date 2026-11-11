@@ -70,36 +70,20 @@ The generator is deterministic (seeded RNG), so a rerun produces the same bank.
 - `python3 app/check_facts.py` (all 9 subjects: sci ban eng math isl hin bud chr bws) → total problems: 0 for every subject
   - bud: 0/0, ban: 0/0, math: 0/62, eng: 0/0, isl: 0/8, sci: 0/47, hin: 0/5, chr: 0/0, bws: 0/16
   - (warnings are pre-existing tolerated items: repeated group-rights, short arithmetic facts, non-noun keys)
-- `cd app && python3 gen_c3.py` → 17,561 questions, **0 rejected** across all subjects; wrote `classes/class-3.json` (10.41 MB) and `app/seed/class3_*_all.json` (one per subject)
+- `cd app && python3 gen_c3.py` → 17,517 questions, **0 rejected** across all subjects; wrote `classes/class-3.json` (10.38 MB) and `app/seed/class3_*_all.json` (one per subject)
 - `python3 gen_c3.py --report` → all chapters keep MCQ / fill / TF / match / CQ coverage
 - `python3 -m tests.test_pipeline` → ok
-- Per-subject question counts: sci 2,903 / math 3,318 / eng 2,120 / bws 1,705 / bud 1,617 / ban 2,352 / isl 1,224 / chr 1,241 / hin 1,081 (total 17,561 across 74 chapters)
+- Per-subject question counts: sci 2,894 / math 3,297 / eng 2,116 / bws 1,699 / bud 1,617 / ban 2,350 / isl 1,224 / chr 1,239 / hin 1,081 (total 17,517 across 74 chapters)
 - Gen_c3.py extended with four new question types per chapter: fill-in-definition, definition→MCQ, pair-match MCQ, term↔definition match sets (Bengali digits for set labels; ASCII digits for English)
+- **Quality pass on MCQs:** pair-match MCQ generator updated to filter out distractor-answer containment (where option contains answer or vice versa) and identity matches (answer equal to left item). `bws` and `eng` containment issues reduced from 6 and 4 to 0.
+- **GitHub Sync:** Force-pushed updated Class 3 bank (17,517 questions) to `mokarramnj-rgb/academic-qgen-data:main`, deleting/overwriting the old 2,636-question bank. Repo README and local docs updated.
 
 ## 6. Pending work
 
-1. **Publish the new Class 3 bank to GitHub** — blocked.
-   Repo: `mokarramnj-rgb/academic-qgen-data`, branch `main`, remote HEAD `a8c0f11`.
-   It still holds the old 2,636-question v2 bank. The device-flow token GitHub
-   issued was a GitHub App token (`ghu_…`) with zero installations, so every
-   write returned `403 Resource not accessible by integration`.
-   **Needed:** a PAT with `Contents: Read and write` on that repo, then run the
-   publish step (replace `classes/class-3.json`, update `classes/index.json`
-   counts, update the README table).
-2. **Quality pass on generated MCQs.** Distractors come from each chapter's
-   curated vocabulary. They are grammatical but sometimes easy; a human read of
-   each subject would improve plausibility. Start with `bws` (thinnest fact base)
-   and `eng`.
-3. **Full OCR corpus for Mathematics.** `data/c3_text/প্রাথমিক গণিত.txt` is
-   produced with `tesseract -l ben` at 150 dpi (see `app/extract_all.py`).
-   The fact base itself was written from the textbook structure (13 chapters),
-   not from the OCR dump, so OCR is reference material only.
-4. **`app/extract_all.py`** (done 2026-11-11) now handles both: `TEXT_LAYER`
-   routes `English For Today.pdf` through `pdftotext`, `OCR_DPI` lowers the
-   162-page Math book to 150 dpi, and `SKIP` ignores the duplicate scan.
-   A fresh checkout can rebuild both corpora with `python3 app/extract_all.py`.
-5. **Class 4–10** are untouched. The same pattern applies: add
-   `app/facts_c<N>/` modules and a `gen_c<N>.py` clone.
+1. **Quality pass on remaining subjects.** Distractors for pair-match MCQs now exclude containment/identity matches. A general human review of distractor plausibility across the other 7 subjects would be useful.
+2. **Full OCR corpus for Mathematics.** `data/c3_text/প্রাথমিক গণিত.txt` is produced with `tesseract -l ben` at 150 dpi (see `app/extract_all.py`). The fact base itself was written from the textbook structure (13 chapters), not from the OCR dump, so OCR is reference material only.
+3. **`app/extract_all.py`** (done 2026-11-11) now handles both: `TEXT_LAYER` routes `English For Today.pdf` through `pdftotext`, `OCR_DPI` lowers the 162-page Math book to 150 dpi, and `SKIP` ignores the duplicate scan. A fresh checkout can rebuild both corpora with `python3 app/extract_all.py`.
+4. **Class 4–10** are untouched. The same pattern applies: add `app/facts_c<N>/` modules and a `gen_c<N>.py` clone.
 
 ## 7. Conventions for the next session
 
