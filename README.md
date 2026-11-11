@@ -63,6 +63,28 @@ is enough for style mining — you do not need all 154k items for a style profil
 | `src/schema.sql` | Questions, chunks, curriculum nodes, items, attempts, schedule |
 | `src/db.py` | SQLite ingest + stats |
 
+### Class 3 bank (2026-11-11)
+
+All nine NCTB Class 3 subjects are generated from curated fact bases in
+`app/facts_c3/` by `app/gen_c3.py`:
+
+| Subject | Code | Chapters | Questions |
+|---|---|---:|---:|
+| প্রাথমিক বিজ্ঞান | `sci` | 11 | 1,781 |
+| আমার বাংলা বই | `ban` | 14 | 1,174 |
+| English For Today | `eng` | 8 | 342 |
+| প্রাথমিক গণিত | `math` | 13 | 484 |
+| ইসলাম শিক্ষা | `isl` | 5 | 857 |
+| হিন্দুধর্ম শিক্ষা | `hin` | 5 | 687 |
+| বৌদ্ধধর্ম শিক্ষা | `bud` | 9 | 718 |
+| খ্রিষ্টধর্ম শিক্ষা | `chr` | 5 | 685 |
+| বাংলাদেশ ও বিশ্বপরিচয় | `bws` | 4 | 262 |
+| **Total** | | **74** | **6,990** |
+
+`classes/class-3.json` is the combined bank; `app/seed/class3_<code>_all.json`
+holds one file per subject. See `HANDOFF.md` for the current state and the
+unfinished work (publishing the bank, quality review, Class 4–10).
+
 ### Verified on this machine
 
 - Satt class-8 page → 15 questions parsed, 9 with answers.
@@ -70,7 +92,9 @@ is enough for style mining — you do not need all 154k items for a style profil
 - NCTB class-7 Bangla PDF (144 pages) → 355 chunks, chapters 1–7 detected.
 - `pdftotext` extracts Bangla well; one page uses a legacy ASCII font and produces
   gibberish, so chunk filtering by script ratio is recommended (roadmap).
-- Tesseract has **no Bengali data** installed; scanned PDFs need `tesseract-data-ben`.
+- Bengali OCR uses `tesseract-ocr-ben` (installed here); scanned PDFs are
+  rasterised at 300 dpi (150 dpi for the 162-page Mathematics book) and OCR'd.
+  `English For Today` has a text layer and is read with `pdftotext`.
 
 ---
 

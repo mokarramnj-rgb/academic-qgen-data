@@ -24,15 +24,21 @@ sys.path.insert(0, str(ROOT))
 
 import gen_c3 as g  # noqa: E402
 
-CODES = ["sci", "ban", "isl", "hin", "bud", "chr", "bws"]
+CODES = ["sci", "ban", "eng", "math", "isl", "hin", "bud", "chr", "bws"]
 LABELS = ["ক", "খ", "গ", "ঘ"]
 
 
-def bad_text(s: str, min_letters: int = 2) -> str | None:
+def bad_text(s: str, script: str = "bn", min_letters: int = 2) -> str | None:
     if not isinstance(s, str):
         return "not a string"
     if not s.strip():
         return "empty"
+    if script != "bn":
+        # English / Mathematics modules have their own charter; reuse the
+        # generator's validator so the two checks can never disagree.
+        if not g.clean_text(s, script):
+            return f"invalid characters for script {script!r}"
+        return None
     if g.BAD_CHARS.search(s):
         return "non-Bengali characters"
     if sum(1 for c in s if "\u0980" <= c <= "\u09ff") < min_letters:
@@ -56,6 +62,11 @@ def check_subject(code: str) -> list[str]:
     except ModuleNotFoundError:
         return [f"{code}: module missing"]
     subj = mod.SUBJECT
+    script = subj.get("script", "bn")
+
+    def bt(s: str, min_letters: int = 2) -> str | None:
+        return bad_text(s, script, min_letters)
+
     for k in ("code", "subject", "book", "source", "chapters"):
         if k not in subj:
             errs.append(f"{code}: SUBJECT missing {k!r}")
@@ -101,7 +112,7 @@ def check_subject(code: str) -> list[str]:
                 continue
             term, definition = item
             for piece, what in ((term, "term"), (definition, "definition")):
-                e = bad_text(piece)
+                e = bt(piece)
                 if e:
                     errs.append(f"{tag}: def {what} {e}: {piece!r}")
             key = g.norm(term)
@@ -122,11 +133,11 @@ def check_subject(code: str) -> list[str]:
                 errs.append(f"{tag}: fact is not (statement, key): {item!r}")
                 continue
             stmt, key = item
-            e = bad_text(stmt)
+            e = bt(stmt)
             if e:
                 errs.append(f"{tag}: fact {e}: {stmt!r}")
                 continue
-            e = bad_text(key)
+            e = bt(key)
             if e:
                 errs.append(f"{tag}: fact key {e}: {key!r}")
                 continue
@@ -156,11 +167,11 @@ def check_subject(code: str) -> list[str]:
                 errs.append(f"{tag}: tf_false is not (statement, correction)")
                 continue
             stmt, fix = item
-            e = bad_text(stmt)
+            e = bt(stmt)
             if e:
                 errs.append(f"{tag}: tf_false {e}: {stmt!r}")
             if fix:
-                e = bad_text(fix)
+                e = bt(fix)
                 if e:
                     errs.append(f"{tag}: tf_false correction {e}: {fix!r}")
             if g.norm(stmt) in seen_facts:
@@ -171,7 +182,7 @@ def check_subject(code: str) -> list[str]:
                 errs.append(f"{tag}: group is not (category, pairs)")
                 continue
             category, pairs = item
-            e = bad_text(category)
+            e = bt(category)
             if e:
                 errs.append(f"{tag}: group category {e}: {category!r}")
             if len(pairs) < 3:
@@ -183,7 +194,7 @@ def check_subject(code: str) -> list[str]:
                     continue
                 a, c = pair
                 for piece in (a, c):
-                    e = bad_text(piece)
+                    e = bt(piece)
                     if e:
                         errs.append(f"{tag}: group {e}: {piece!r}")
                 if g.norm(c) in rights:
@@ -198,7 +209,7 @@ def check_subject(code: str) -> list[str]:
                 errs.append(f"{tag}: cq is not (stimulus, subquestions, answer)")
                 continue
             stim, subs, answer = item
-            e = bad_text(stim)
+            e = bt(stim)
             if e:
                 errs.append(f"{tag}: cq stimulus {e}: {stim!r}")
             if len(stim) < 30:
@@ -210,19 +221,20 @@ def check_subject(code: str) -> list[str]:
                     errs.append(f"{tag}: cq subquestion malformed: {sub!r}")
                     continue
                 label, text, marks = sub
-                if label != LABELS[i]:
-                    errs.append(f"{tag}: cq label {label!r} should be {LABELS[i]!r}")
-                e = bad_text(text)
+                want = LABELS[i] if script != "en" else "abcd"[i]
+                if label != want:
+                    errs.append(f"{tag}: cq label {label!r} should be {want!r}")
+                e = bt(text)
                 if e:
                     errs.append(f"{tag}: cq subquestion {e}: {text!r}")
                 if marks not in (1, 2, 3, 4):
                     errs.append(f"{tag}: cq marks {marks!r} invalid")
-            e = bad_text(answer)
+            e = bt(answer)
             if e:
                 errs.append(f"{tag}: cq answer {e}: {answer!r}")
 
         for t in terms:
-            e = bad_text(t)
+            e = bt(t)
             if e:
                 errs.append(f"{tag}: term {e}: {t!r}")
             elif not g.noun_like(t):
@@ -232,7 +244,7 @@ def check_subject(code: str) -> list[str]:
             if len(cls) < 2:
                 errs.append(f"{tag}: class too small: {cls!r}")
             for t in cls:
-                e = bad_text(t)
+                e = bt(t)
                 if e:
                     errs.append(f"{tag}: class member {e}: {t!r}")
                 elif not g.noun_like(t):

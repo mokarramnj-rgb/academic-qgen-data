@@ -169,6 +169,12 @@ function seedBank() {
   const cmap = m.cm || m.chapter_map || {};
   return (SEED.questions || []).map((q) => {
     const ch = String(q.chapter || m.chapter || '');
+    const code = q.subject_code || q.code || '';
+    const chapterTitle = q.chapter_title
+      || (code && cmap[`${code}:${ch}`])
+      || cmap[ch]
+      || m.chapter_title
+      || '';
     return {
       options: [],
       subquestions: [],
@@ -183,7 +189,7 @@ function seedBank() {
       class_name: String(q.class_name || m.class_name || ''),
       subject: q.subject || m.subject || '',
       chapter: ch,
-      chapter_title: q.chapter_title || cmap[ch] || m.chapter_title || '',
+      chapter_title: chapterTitle,
       page: q.page ?? m.page ?? null,
       source: q.source || m.source || 'NCTB',
       bloom: q.bloom || 'remember',

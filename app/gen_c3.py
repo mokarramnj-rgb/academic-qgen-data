@@ -37,12 +37,46 @@ _BN = str.maketrans("0123456789", BN_DIGITS)
 SUBJECT_MODULES = [
     "facts_c3.sci",
     "facts_c3.ban",
+    "facts_c3.eng",
+    "facts_c3.math",
     "facts_c3.isl",
     "facts_c3.hin",
     "facts_c3.bud",
     "facts_c3.chr",
     "facts_c3.bws",
 ]
+
+# Per-script question wording.  Bengali-medium books reuse the Bengali
+# templates; the English book gets English stems so the paper reads naturally.
+PHRASES = {
+    "bn": {
+        "def_q": "{d}—এটি কী?",
+        "def_a": "{term} কী?",
+        "fill_q": "শূন্যস্থানে সঠিক শব্দটি বেছে নাও: {blank}",
+        "match_q": "বাম পাশের সাথে ডান পাশের সঠিক অংশ মিলাও: {category}",
+        "fill_def": "{d}—এটি ——।",
+        "def_mcq": "‘{t}’-এর সঠিক সংজ্ঞা কোনটি?",
+        "pair_mcq": "‘{cat}’-এ ‘{l}’-এর সাথে কোনটি মেলে?",
+        "match_def": "বাম পাশের শব্দকে ডান পাশের সংজ্ঞার সাথে মিলাও: {cat}",
+        "cq_q": "উদ্দীপক পড়ে নিচের প্রশ্নগুলোর উত্তর দাও।",
+        "true": "শুদ্ধ",
+        "false": "অশুদ্ধ",
+    },
+    "en": {
+        "def_q": "Which word means \"{d}\"?",
+        "def_a": "What is {term}?",
+        "fill_q": "Choose the correct word: {blank}",
+        "match_q": "Match the left side with the correct right side: {category}",
+        "fill_def": '"{d}" means ----.',
+        "def_mcq": 'What is the correct meaning of "{t}"?',
+        "pair_mcq": 'In "{cat}", which one matches "{l}"?',
+        "match_def": 'Match each word on the left with its meaning on the right: {cat}',
+        "cq_q": "Read the passage and answer the questions below.",
+        "true": "True",
+        "false": "False",
+    },
+}
+PHRASES["math"] = PHRASES["bn"]
 
 # U+0964/U+0965 are the danda/double danda that Bengali also uses, so legal.
 BAD_CHARS = re.compile(r"[A-Za-z\u0600-\u06FF\u0900-\u0963\u0966-\u097F\u09E4]")
@@ -52,7 +86,7 @@ ALLOWED_PUNCT = set("।?!—‘’\"'(),%-–:;…০১২৩৪৫৬৭৮�
 SUFFIXES = ["দের", "য়ের", "ের", "টির", "টার", "টি", "টা", "কে", "ে", "য়", "র"]
 
 VERB_TAIL = re.compile(
-    r"(করে|হয়|থাকে|যায়|পায়|দেয়|খায়|জন্মায়|বলে|হলো|হল|নয়|দেখায়|"
+    r"(?:^|\s)(করে|হয়|থাকে|যায়|পায়|দেয়|খায়|জন্মায়|বলে|হলো|হল|নয়|দেখায়|"
     r"পারে|কাটে|ফেলে|টানে|ধরে|বাড়ে|বাঁচে|বেঁচে|কষ্ট|শোষণ করে)$"
 )
 
@@ -70,20 +104,46 @@ def tidy(s: str) -> str:
     return s
 
 
-def ensure_danda(s: str) -> str:
+MATH_PUNCT = ALLOWED_PUNCT | set("+−-×÷*/=<>≤≥.")
+EN_PUNCT = set(".,!?'\"()%-–—:;…/+=")
+
+
+def ensure_danda(s: str, script: str = "bn") -> str:
     s = tidy(s)
-    if s and not s.endswith(("।", "?", "!")):
-        s += "।"
+    end = "." if script == "en" else "।"
+    if s and not s.endswith(("।", "?", "!", ".")):
+        s += end
     return s
 
 
-def clean_text(s: str) -> bool:
+def clean_text(s: str, script: str = "bn") -> bool:
+    """Validate generated text for the script of its subject.
+
+    ``bn`` keeps the strict Bengali-only filter that rejects OCR junk in the
+    Bengali books.  ``en`` allows Latin letters, and ``math`` additionally
+    allows arithmetic operators, because Class 3 English and Mathematics use
+    them in their stems.
+    """
     s = tidy(s)
     if not s:
         return False
+    if script == "en":
+        if re.search(r"[\u0600-\u06FF\u0900-\u097F]", s):
+            return False
+        if sum(1 for c in s if c.isascii() and c.isalpha()) < 2:
+            return False
+        return all(c == " " or (c.isascii() and c.isalnum()) or c in EN_PUNCT
+                   for c in s)
+    if script == "math":
+        if re.search(r"[A-Za-z\u0600-\u06FF\u0900-\u0963\u0966-\u097F\u09E4]", s):
+            return False
+        if not any("\u0980" <= c <= "\u09ff" for c in s):
+            return False
+        return all(c == " " or "\u0980" <= c <= "\u09ff" or c in MATH_PUNCT
+                   for c in s)
     if BAD_CHARS.search(s):
         return False
-    if sum(1 for c in s if "\u0980" <= c <= "\u09ff") < 3:
+    if sum(1 for c in s if "\u0980" <= c <= "\u09ff") < 2:
         return False
     for c in s:
         if c == " " or "\u0980" <= c <= "\u09ff" or c in ALLOWED_PUNCT:
@@ -208,9 +268,10 @@ def falsifiable(statement: str, key: str, vocab: list[str]) -> bool:
     return True
 
 
-def blank_phrase(statement: str, key: str) -> tuple[str, str] | None:
+def blank_phrase(statement: str, key: str,
+                 script: str = "bn") -> tuple[str, str] | None:
     """Replace `key` with a blank, taking its case suffix along."""
-    st = ensure_danda(statement)
+    st = ensure_danda(statement, script)
     i = st.find(key)
     if i < 0:
         return None
@@ -223,6 +284,8 @@ def blank_phrase(statement: str, key: str) -> tuple[str, str] | None:
             answer = key + suf
             tail = tail[len(suf):]
             break
+    if script == "en" and tail[:1].isascii() and tail[:1].isalpha():
+        return None                      # "cat" inside "cats": avoid "——s"
     if tail[:1] and "\u0980" <= tail[0] <= "\u09ff" and not any(
             tail.startswith(s) for s in SUFFIXES):
         return None                      # key is glued to a different word
@@ -233,8 +296,9 @@ def blank_phrase(statement: str, key: str) -> tuple[str, str] | None:
 
 
 class Builder:
-    def __init__(self, dedupe: Deduper) -> None:
+    def __init__(self, dedupe: Deduper, script: str = "bn") -> None:
         self.dedupe = dedupe
+        self.script = script
         self.questions: list[dict] = []
         self.counters = defaultdict(int)
         self.rejected = defaultdict(int)
@@ -247,7 +311,7 @@ class Builder:
         if q.get("stimulus"):
             fields.append(q["stimulus"])
         fields = [t for t in fields if t]
-        if not all(clean_text(t) for t in fields):
+        if not all(clean_text(t, self.script) for t in fields):
             self.rejected["dirty_text"] += 1
             return
         if q["type"] == "mcq":
@@ -276,6 +340,7 @@ def base_question(code: str, ch: int, title: str, typ: str, stem: str,
         "difficulty": extra.pop("difficulty", 1),
         "class_name": "3",
         "subject": subject,
+        "subject_code": code,
         "chapter_title": title,
         "chapter": str(ch),
         "source": source,
@@ -285,9 +350,14 @@ def base_question(code: str, ch: int, title: str, typ: str, stem: str,
 
 
 def build_chapter(b: Builder, code: str, subject: str, source: str,
-                  ch: int, data: dict, book_vocab: list[str]) -> None:
+                  ch: int, data: dict, book_vocab: list[str],
+                  script: str = "bn") -> None:
     title = data["title"]
     rnd = random.Random(f"{code}-{ch}")
+    ph = PHRASES.get(script, PHRASES["bn"])
+
+    def danda(s: str) -> str:
+        return ensure_danda(s, script)
 
     defs = data.get("defs", [])
     facts = data.get("facts", [])
@@ -331,15 +401,16 @@ def build_chapter(b: Builder, code: str, subject: str, source: str,
             options = opts + [tidy(term)]
             rnd.shuffle(options)
             b.add(base_question(
-                code, ch, title, "mcq", f"{d}—এটি কী?", subject, source,
+                code, ch, title, "mcq", ph["def_q"].format(d=d), subject, source,
                 options=options,
                 answer_index=options.index(tidy(term)) + 1,
                 answer_text=tidy(term), difficulty=2,
             ))
         b.add(base_question(
-            code, ch, title, "wrq_k", f"{tidy(term)} কী?", subject, source,
-            answer_text=ensure_danda(definition),
-            explanation=ensure_danda(definition),
+            code, ch, title, "wrq_k", ph["def_a"].format(term=tidy(term)),
+            subject, source,
+            answer_text=danda(definition),
+            explanation=danda(definition),
         ))
 
     # A true/false section where nearly every item is true teaches nothing, so
@@ -357,11 +428,11 @@ def build_chapter(b: Builder, code: str, subject: str, source: str,
 
     # ---- facts -> fill / MCQ / TF ---------------------------------------
     for statement, key in facts:
-        pair = blank_phrase(statement, key)
+        pair = blank_phrase(statement, key, script)
         if not pair:
             continue
         blank, answer = pair
-        st = ensure_danda(statement)
+        st = danda(statement)
 
         b.add(base_question(
             code, ch, title, "fill", blank, subject, source,
@@ -376,7 +447,7 @@ def build_chapter(b: Builder, code: str, subject: str, source: str,
             rnd.shuffle(options)
             b.add(base_question(
                 code, ch, title, "mcq",
-                f"শূন্যস্থানে সঠিক শব্দটি বেছে নাও: {blank}", subject, source,
+                ph["fill_q"].format(blank=blank), subject, source,
                 options=options,
                 answer_index=options.index(answer) + 1,
                 answer_text=answer,
@@ -385,7 +456,7 @@ def build_chapter(b: Builder, code: str, subject: str, source: str,
         if keep_true is None or statement in keep_true:
             b.add(base_question(
                 code, ch, title, "tf", st, subject, source,
-                answer_bool=True, answer_text="শুদ্ধ",
+                answer_bool=True, answer_text=ph["true"],
             ))
 
         # fallback for fact bases without curated false statements: swap the
@@ -399,7 +470,7 @@ def build_chapter(b: Builder, code: str, subject: str, source: str,
                     b.add(base_question(
                         code, ch, title, "tf", st.replace(key, sibs[0], 1),
                         subject, source, answer_bool=False,
-                        answer_text="অশুদ্ধ", difficulty=2,
+                        answer_text=ph["false"], difficulty=2,
                     ))
 
     # ---- hand-authored false statements ----------------------------------
@@ -407,9 +478,9 @@ def build_chapter(b: Builder, code: str, subject: str, source: str,
     # balance: a mechanical swap cannot falsify a whole-clause fact.
     for false_stmt, correction in data.get("tf_false", []):
         b.add(base_question(
-            code, ch, title, "tf", ensure_danda(false_stmt), subject, source,
-            answer_bool=False, answer_text="অশুদ্ধ",
-            explanation=ensure_danda(correction) if correction else "",
+            code, ch, title, "tf", danda(false_stmt), subject, source,
+            answer_bool=False, answer_text=ph["false"],
+            explanation=danda(correction) if correction else "",
             difficulty=2,
         ))
 
@@ -417,8 +488,8 @@ def build_chapter(b: Builder, code: str, subject: str, source: str,
     for question, answer in qa:
         b.add(base_question(
             code, ch, title, "wrq_k", question, subject, source,
-            answer_text=ensure_danda(answer),
-            explanation=ensure_danda(answer),
+            answer_text=danda(answer),
+            explanation=danda(answer),
         ))
 
     # ---- matching --------------------------------------------------------
@@ -442,7 +513,7 @@ def build_chapter(b: Builder, code: str, subject: str, source: str,
         answer_key = [shuffled.index(r) for r in rights]
         b.add(base_question(
             code, ch, title, "match",
-            f"বাম পাশের সাথে ডান পাশের সঠিক অংশ মিলাও: {category}", subject, source,
+            ph["match_q"].format(category=category), subject, source,
             left=left, right=shuffled, answer_key=answer_key,
             marks=len(left), bloom="understand", difficulty=2,
         ))
@@ -450,10 +521,88 @@ def build_chapter(b: Builder, code: str, subject: str, source: str,
     # ---- creative questions ----------------------------------------------
     for stimulus, subs, answer in cqs:
         b.add(base_question(
-            code, ch, title, "cq", "উদ্দীপক পড়ে নিচের প্রশ্নগুলোর উত্তর দাও।", subject, source,
+            code, ch, title, "cq", ph["cq_q"], subject, source,
             stimulus=tidy(stimulus),
             subquestions=[{"label": l, "text": tidy(t), "marks": m} for l, t, m in subs],
-            answer_text=ensure_danda(answer), marks=10, bloom="apply", difficulty=3,
+            answer_text=danda(answer), marks=10, bloom="apply", difficulty=3,
+        ))
+
+    # ---- definition -> fill-in-the-blank (one extra item per definition) ---
+    for term, definition in defs:
+        d = tidy(definition).rstrip("।")
+        stem = ensure_danda(ph["fill_def"].format(d=d), script)
+        b.add(base_question(
+            code, ch, title, "fill", stem, subject, source,
+            answer_text=tidy(term), marks=1, bloom="remember", difficulty=1,
+        ))
+
+    # ---- definition -> term MCQ: which definition fits the term? ----------
+    defs_clean = [(tidy(t), tidy(defn).rstrip("।")) for t, defn in defs]
+    defs_uniq = list(dict.fromkeys(defs_clean))
+    if len(defs_uniq) >= 4:
+        for term, d in defs_uniq:
+            others = [dd for tt, dd in defs_uniq if tt != term and norm(dd) != norm(d)]
+            options = [d] + others[:3]
+            if len(options) != 4 or len({norm(o) for o in options}) != 4:
+                continue
+            rnd.shuffle(options)
+            b.add(base_question(
+                code, ch, title, "mcq",
+                ph["def_mcq"].format(t=tidy(term)), subject, source,
+                options=options,
+                answer_index=options.index(d) + 1,
+                answer_text=d, difficulty=2, bloom="understand",
+            ))
+
+    # ---- groups -> MCQ: which right side matches the left side? -----------
+    for category, pairs in groups:
+        pairs2 = [(tidy(a), tidy(c)) for a, c in pairs]
+        rights = list(dict.fromkeys(c for _, c in pairs2))
+        if len(rights) < 4:
+            continue
+        for left, right in pairs2:
+            # skip trivial identity matches where the answer is literally the
+            # left item (answer already visible in the stem)
+            if norm(left) == norm(right):
+                continue
+            distractors = [r for r in rights
+                           if norm(r) != norm(right)
+                           and norm(right) not in norm(r)     # distractor ⊉ answer
+                           and norm(r) not in norm(right)]    # answer ⊉ distractor
+            if len(distractors) < 3:
+                continue                                     # not enough good options
+            distractors = distractors[:3]
+            options = [right] + distractors
+            rnd.shuffle(options)
+            b.add(base_question(
+                code, ch, title, "mcq",
+                ph["pair_mcq"].format(cat=tidy(category), l=tidy(left)), subject, source,
+                options=options,
+                answer_index=options.index(right) + 1,
+                answer_text=right, difficulty=1, bloom="remember",
+            ))
+
+    # ---- defs -> auto match sets (term <-> definition) -------------------
+    set_label = "সেট" if script != "en" else "set"
+    for si in range(0, len(defs_uniq), 5):
+        chunk = defs_uniq[si:si + 5]
+        if len(chunk) < 4:
+            continue
+        lefts = [t for t, _ in chunk]
+        rights = [d for _, d in chunk]
+        if len({norm(r) for r in rights}) != len(rights):
+            continue
+        order = list(range(len(rights)))
+        rnd.shuffle(order)
+        shuffled = [rights[i] for i in order]
+        answer_key = [shuffled.index(r) for r in rights]
+        # English uses ASCII digits; Bengali/Math use Bengali digits.
+        set_num = str(si // 5 + 1) if script == "en" else bn(si // 5 + 1)
+        b.add(base_question(
+            code, ch, title, "match",
+            ph["match_def"].format(cat=f"{title} {set_label} {set_num}"), subject, source,
+            left=lefts, right=shuffled, answer_key=answer_key,
+            marks=len(lefts), bloom="understand", difficulty=2,
         ))
 
 
@@ -464,7 +613,15 @@ def load_subjects() -> list[dict]:
             mod = importlib.import_module(mod_name)
         except ModuleNotFoundError:
             continue
-        subject = mod.SUBJECT
+        except Exception as exc:            # broken module must not stop the run
+            print(f"warning: skipping {mod_name}: {type(exc).__name__}: {exc}",
+                  file=sys.stderr)
+            continue
+        subject = getattr(mod, "SUBJECT", None)
+        if not isinstance(subject, dict) or not subject.get("chapters"):
+            print(f"warning: skipping {mod_name}: no SUBJECT['chapters']",
+                  file=sys.stderr)
+            continue
         # Optional companion module with hand-authored false statements, so a
         # large fact base can be extended without touching its source file.
         code = subject.get("code")
@@ -472,6 +629,10 @@ def load_subjects() -> list[dict]:
             try:
                 extra = importlib.import_module(f"facts_c3.{code}_tf")
             except ModuleNotFoundError:
+                extra = None
+            except Exception as exc:
+                print(f"warning: ignoring facts_c3.{code}_tf: "
+                      f"{type(exc).__name__}: {exc}", file=sys.stderr)
                 extra = None
             if extra is not None:
                 for ch, items in getattr(extra, "TF_FALSE", {}).items():
@@ -484,7 +645,8 @@ def load_subjects() -> list[dict]:
 
 
 def build_subject(subject_data: dict, dedupe: Deduper) -> tuple[list[dict], dict]:
-    b = Builder(dedupe)
+    script = subject_data.get("script", "bn")
+    b = Builder(dedupe, script)
     chapters = subject_data["chapters"]
     book_vocab: list[str] = []
     for ch in chapters.values():
@@ -494,7 +656,8 @@ def build_subject(subject_data: dict, dedupe: Deduper) -> tuple[list[dict], dict
 
     for ch in sorted(chapters):
         build_chapter(b, subject_data["code"], subject_data["subject"],
-                      subject_data["source"], int(ch), chapters[ch], book_vocab)
+                      subject_data["source"], int(ch), chapters[ch], book_vocab,
+                      script)
     report = {
         "code": subject_data["code"],
         "subject": subject_data["subject"],
