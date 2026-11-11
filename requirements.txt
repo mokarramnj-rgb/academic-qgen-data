@@ -1,0 +1,4 @@
+# No third-party dependencies. Python 3.11+.
+# Optional, for PDF ingestion in phase 1:
+#   pypdf
+#   pymupdf

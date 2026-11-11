@@ -1,0 +1,107 @@
+{
+  "corpus": {
+    "n": 15,
+    "with_answer": 9,
+    "answer_coverage": 0.6,
+    "option_count_mode": 4
+  },
+  "stem_words": {
+    "mean": 11.4,
+    "p50": 9,
+    "p90": 22,
+    "max": 26
+  },
+  "option_words": {
+    "mean": 2.9,
+    "p50": 3.0,
+    "p90": 6,
+    "max": 9
+  },
+  "answer_position_share": {
+    "1": 0.11,
+    "2": 0.22,
+    "3": 0.44,
+    "4": 0.22
+  },
+  "archetypes": [
+    {
+      "id": "other",
+      "label": "other",
+      "count": 5,
+      "share": 0.33
+    },
+    {
+      "id": "multi_statement",
+      "label": "i/ii/iii statement combination",
+      "count": 3,
+      "share": 0.2
+    },
+    {
+      "id": "selection",
+      "label": "which one (কোনটি)",
+      "count": 2,
+      "share": 0.13
+    },
+    {
+      "id": "definition",
+      "label": "definition / meaning",
+      "count": 1,
+      "share": 0.07
+    },
+    {
+      "id": "time",
+      "label": "time / when",
+      "count": 1,
+      "share": 0.07
+    },
+    {
+      "id": "cause",
+      "label": "cause / reason",
+      "count": 1,
+      "share": 0.07
+    },
+    {
+      "id": "quantity",
+      "label": "quantity / number",
+      "count": 1,
+      "share": 0.07
+    },
+    {
+      "id": "person",
+      "label": "person / who",
+      "count": 1,
+      "share": 0.07
+    }
+  ],
+  "bloom_proxy": {
+    "remember": 0.73,
+    "understand": 0.2,
+    "analyze": 0.07
+  },
+  "top_tags": [
+    {
+      "tag": "সাহিত্য-কনিকা",
+      "count": 15
+    },
+    {
+      "tag": "বহুনির্বাচনি-প্রশ্ন",
+      "count": 5
+    },
+    {
+      "tag": "বহুনির্বাচনি-প্রশ্ন-28032",
+      "count": 3
+    },
+    {
+      "tag": "বহুনির্বাচনি-প্রশ্ন-66574",
+      "count": 3
+    },
+    {
+      "tag": "বহুনির্বাচনি-প্রশ্ন-74183",
+      "count": 3
+    },
+    {
+      "tag": "বহুনির্বাচনি-প্রশ্ন-91664",
+      "count": 1
+    }
+  ]
+}

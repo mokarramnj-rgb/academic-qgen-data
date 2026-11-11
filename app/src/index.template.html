@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="অফলাইন প্রশ্নব্যাংক থেকে MCQ, জ্ঞানমূলক, অনুধাবনমূলক ও সৃজনশীল প্রশ্ন বেছে প্রশ্নপত্র তৈরি করুন। কোনো ইন্টারনেট বা হোস্টিং লাগে না।">
+<meta name="color-scheme" content="light">
+<title>প্রশ্নপত্র স্টুডিও — অফলাইন প্রশ্নব্যাংক</title>
+<style>
+/*__CSS__*/
+</style>
+</head>
+<body>
+
+<div class="home" id="homeView">
+  <div class="home-inner">
+    <h1>প্রশ্নপত্র স্টুডিও</h1>
+    <p>NCTB পাঠ্যবই থেকে প্রশ্ন বেছে নিন, মুহূর্তেই তৈরি করুন প্রিন্ট-রেডি প্রশ্নপত্র — MCQ, জ্ঞানমূলক, অনুধাবনমূলক ও সৃজনশীল।</p>
+    <div class="home-classes">
+      <div class="home-classes-title">আপনি কোন কোন শ্রেণির জন্য অ্যাপটি ব্যবহার করতে চাচ্ছেন?</div>
+      <div class="home-classes-row">
+        <div class="class-picks" id="homeClassPicks">
+          <label class="class-pick" title="এখনো কোনো প্রশ্ন যোগ হয়নি"><input type="checkbox" value="3"><span>৩য় শ্রেণি</span></label>
+          <label class="class-pick" title="এখনো কোনো প্রশ্ন যোগ হয়নি"><input type="checkbox" value="4"><span>৪র্থ শ্রেণি</span></label>
+          <label class="class-pick" title="এখনো কোনো প্রশ্ন যোগ হয়নি"><input type="checkbox" value="5"><span>৫ম শ্রেণি</span></label>
+          <label class="class-pick" title="এখনো কোনো প্রশ্ন যোগ হয়নি"><input type="checkbox" value="6"><span>৬ষ্ঠ শ্রেণি</span></label>
+          <label class="class-pick" title="এখনো কোনো প্রশ্ন যোগ হয়নি"><input type="checkbox" value="7"><span>৭ম শ্রেণি</span></label>
+          <label class="class-pick"><input type="checkbox" value="8" checked><span>৮ম শ্রেণি</span></label>
+          <label class="class-pick" title="এখনো কোনো প্রশ্ন যোগ হয়নি"><input type="checkbox" value="9"><span>৯ম শ্রেণি</span></label>
+          <label class="class-pick" title="এখনো কোনো প্রশ্ন যোগ হয়নি"><input type="checkbox" value="10"><span>১০ম শ্রেণি</span></label>
+        </div>
+        <button class="btn primary" id="btnDownloadClass" type="button" disabled>ডাউনলোড</button>
+      </div>
+      <div class="home-classes-note" id="homeClassNote"></div>
+      <div class="dl-progress" id="homeDl" hidden>
+        <div class="dl-bar"><i id="homeDlFill"></i></div>
+        <div class="dl-text" id="homeDlText"></div>
+      </div>
+    </div>
+
+    <div class="home-actions">
+      <button class="btn primary xl" id="btnGoPrepare" type="button">প্রশ্নপত্র তৈরি করুন</button>
+    </div>
+    <div class="home-note">সম্পূর্ণ অফলাইন · ইন্টারনেট বা হোস্টিং লাগে না · ডেটা আপনার ডিভাইসেই থাকে</div>
+  </div>
+</div>
+
+<div class="setup" id="setupView" hidden>
+  <div class="setup-card">
+    <div class="setup-head">
+      <button class="btn small ghost" id="btnSetupHome" type="button">← হোম</button>
+      <h2>প্রশ্নপত্র তৈরি</h2>
+    </div>
+    <div class="setup-body">
+      <label class="fld"><span>পরীক্ষার নাম</span><input id="suExam" type="text" placeholder="যেমন: বার্ষিক পরীক্ষা ২০২৬"></label>
+      <label class="fld"><span>প্রতিষ্ঠানের নাম</span><input id="suInstitute" type="text" placeholder="প্রতিষ্ঠানের নাম লিখুন"></label>
+      <div class="fld">
+        <span>সময়কাল</span>
+        <div class="time-row">
+          <input id="suHours" type="number" min="0" inputmode="numeric" pattern="[0-9]*" placeholder="" aria-label="ঘণ্টা">
+          <span class="time-unit">ঘণ্টা</span>
+          <input id="suMinutes" type="number" min="0" max="59" inputmode="numeric" pattern="[0-9]*" placeholder="" aria-label="মিনিট">
+          <span class="time-unit">মিনিট</span>
+        </div>
+      </div>
+      <div class="row2">
+        <label class="fld"><span>শ্রেণি নির্বাচন</span><select id="suClass"></select></label>
+        <label class="fld"><span>বিষয় নির্বাচন</span><select id="suSubject"></select></label>
+      </div>
+      <div class="fld">
+        <span>অধ্যায় নির্বাচন</span>
+        <div class="chapter-box" id="suChapterDrop"></div>
+      </div>
+      <div class="fld">
+        <span>প্রশ্নের ধরন ও সংখ্যা</span>
+        <div class="type-box" id="suTypes">
+          <div class="type-row" data-type="mcq">
+            <label class="type-name"><input type="checkbox"> বহুনির্বাচনী (MCQ)</label>
+            <input type="number" class="type-num" min="0" inputmode="numeric" pattern="[0-9]*" placeholder="">
+            <span class="type-avail">(মোট <b class="type-total">০</b>)</span>
+          </div>
+          <div class="type-row" data-type="fill" hidden>
+            <label class="type-name"><input type="checkbox"> শূন্যস্থান পূরণ</label>
+            <input type="number" class="type-num" min="0" inputmode="numeric" pattern="[0-9]*" placeholder="">
+            <span class="type-avail">(মোট <b class="type-total">০</b>)</span>
+          </div>
+          <div class="type-row" data-type="tf" hidden>
+            <label class="type-name"><input type="checkbox"> শুদ্ধ/অশুদ্ধ</label>
+            <input type="number" class="type-num" min="0" inputmode="numeric" pattern="[0-9]*" placeholder="">
+            <span class="type-avail">(মোট <b class="type-total">০</b>)</span>
+          </div>
+          <div class="type-row" data-type="match" hidden>
+            <label class="type-name"><input type="checkbox"> বাম-ডান মিলকরণ</label>
+            <input type="number" class="type-num" min="0" inputmode="numeric" pattern="[0-9]*" placeholder="">
+            <span class="type-avail">(মোট <b class="type-total">০</b>)</span>
+          </div>
+          <div class="type-row" data-type="wrq_k">
+            <label class="type-name"><input type="checkbox"> জ্ঞানমূলক</label>
+            <input type="number" class="type-num" min="0" inputmode="numeric" pattern="[0-9]*" placeholder="">
+            <span class="type-avail">(মোট <b class="type-total">০</b>)</span>
+          </div>
+          <div class="type-row" data-type="wrq_kh">
+            <label class="type-name"><input type="checkbox"> অনুধাবনমূলক</label>
+            <input type="number" class="type-num" min="0" inputmode="numeric" pattern="[0-9]*" placeholder="">
+            <span class="type-avail">(মোট <b class="type-total">০</b>)</span>
+          </div>
+          <div class="type-row" data-type="cq">
+            <label class="type-name"><input type="checkbox"> সৃজনশীল</label>
+            <input type="number" class="type-num" min="0" inputmode="numeric" pattern="[0-9]*" placeholder="">
+            <span class="type-avail">(মোট <b class="type-total">০</b>)</span>
+          </div>
+        </div>
+        <div class="type-sum">মোট প্রশ্ন সংখ্যা <span class="type-sum-box" id="suTotalCount">০</span></div>
+      </div>
+    </div>
+    <div class="setup-foot">
+      <div class="fld diff-pick">
+        <span>কঠিনতার স্তর</span>
+        <div class="chips" id="suDifficulty">
+          <button type="button" class="chip" data-diff="1">সহজ</button>
+          <button type="button" class="chip" data-diff="2">মধ্যম</button>
+          <button type="button" class="chip" data-diff="3">কঠিন</button>
+          <button type="button" class="chip chip-random" data-diff="all">র‍্যান্ডম</button>
+        </div>
+      </div>
+      <button class="btn primary xl" id="btnGenerate" type="button">প্রশ্নপত্র তৈরি করুন</button>
+    </div>
+  </div>
+</div>
+
+<div id="paperView" hidden>
+  <div class="paper-page">
+    <div class="paper-bar">
+      <button class="btn small" id="btnPaperSetup" type="button">← সেটআপ</button>
+      <button class="btn small" id="btnPaperHome" type="button">হোম</button>
+      <span class="spacer"></span>
+      <button class="btn small" id="btnPaperLines" type="button">▦ লাইন</button>
+      <button class="btn small" id="btnPaperEdit" type="button">✎ সম্পাদনা</button>
+      <button class="btn small primary" id="btnPaperPrint" type="button">প্রিন্ট / PDF</button>
+    </div>
+    <div class="pe-bar" id="paperEditBar" hidden>
+      <div class="pe-head">
+        <b>সম্পাদনা মোড</b>
+        <span>লেখা বদলাতে সরাসরি ক্লিক করুন · প্রশ্নের গঠন বদলাতে ✎ চাপুন</span>
+      </div>
+      <div class="row2">
+        <label class="fld"><span>প্রতিষ্ঠানের নাম</span><input id="pvInstitute" type="text"></label>
+        <label class="fld"><span>পরীক্ষার নাম</span><input id="pvExam" type="text"></label>
+      </div>
+      <label class="fld"><span>শিরোনাম</span><input id="pvTitle" type="text"></label>
+      <div class="row2">
+        <label class="fld"><span>শ্রেণি</span><input id="pvClass" type="text"></label>
+        <label class="fld"><span>বিষয়</span><input id="pvSubject" type="text"></label>
+      </div>
+      <div class="row2">
+        <label class="fld"><span>সময়</span><input id="pvTime" type="text"></label>
+        <label class="fld"><span>তারিখ</span><input id="pvDate" type="text"></label>
+      </div>
+      <label class="fld" style="margin-bottom:0"><span>নির্দেশনা (প্রতি লাইনে একটি)</span><textarea id="pvInstr" rows="3"></textarea></label>
+    </div>
+    <div id="paperViewBody"></div>
+  </div>
+</div>
+
+<div id="studioView" hidden>
+<div class="app">
+  <header class="top">
+    <div class="top-inner">
+      <button class="btn small ghost" id="btnHome" type="button" title="হোমে ফিরুন">← হোম</button>
+      <div class="brand">
+        <div class="logo">প্র</div>
+        <div>
+          <h1>প্রশ্নপত্র স্টুডিও</h1>
+          <p>অফলাইন প্রশ্নব্যাংক · NCTB</p>
+        </div>
+      </div>
+      <span class="spacer"></span>
+      <button class="btn" id="btnNewQuestion">+ নতুন প্রশ্ন</button>
+      <button class="btn" id="btnDrafts">খসড়া</button>
+      <button class="btn" id="btnImport">আমদানি</button>
+      <button class="btn" id="btnExport">রপ্তানি</button>
+      <button class="btn primary" id="btnPreview2">প্রিভিউ</button>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="filters panel">
+      <h3>ফিল্টার</h3>
+      <div class="pad">
+        <label class="fld"><span>খুঁজুন</span>
+          <input id="fSearch" type="text" placeholder="প্রশ্ন, উত্তর বা অপশনে খুঁজুন…">
+        </label>
+
+        <div class="row2">
+          <label class="fld"><span>শ্রেণি</span><select id="fClass"></select></label>
+          <label class="fld"><span>বিষয়</span><select id="fSubject"></select></label>
+        </div>
+
+        <label class="fld"><span>অধ্যায় (বিভাগ)</span><select id="fChapter"></select></label>
+
+        <div class="fld">
+          <span>ধরন</span>
+          <div class="chips" id="fTypes">
+            <button type="button" class="chip on" data-type="mcq">MCQ</button>
+            <button type="button" class="chip on" data-type="fill">শূন্যস্থান</button>
+            <button type="button" class="chip on" data-type="tf">শুদ্ধ/অশুদ্ধ</button>
+            <button type="button" class="chip on" data-type="match">মিলকরণ</button>
+            <button type="button" class="chip on" data-type="wrq_k">জ্ঞানমূলক</button>
+            <button type="button" class="chip on" data-type="wrq_kh">অনুধাবনমূলক</button>
+            <button type="button" class="chip on" data-type="cq">সৃজনশীল</button>
+          </div>
+        </div>
+
+        <div class="fld">
+          <span>কঠিনতার স্তর</span>
+          <div class="chips" id="fDifficulty">
+            <button type="button" class="chip on" data-diff="1">সহজ</button>
+            <button type="button" class="chip on" data-diff="2">মধ্যম</button>
+            <button type="button" class="chip on" data-diff="3">কঠিন</button>
+          </div>
+        </div>
+
+        <label class="fld"><span>ব্লুম স্তর</span><select id="fBloom"></select></label>
+
+        <button class="btn small ghost" id="fReset" type="button">ফিল্টার রিসেট</button>
+
+        <div class="stats">
+          <div class="stat"><b id="statTotal">০</b><small>মোট প্রশ্ন</small></div>
+          <div class="stat"><b id="statShown">০</b><small>দেখানো হচ্ছে</small></div>
+          <div class="stat"><b id="statSel">০</b><small>নির্বাচিত</small></div>
+          <div class="stat"><b id="statMarks">০</b><small>মোট নম্বর</small></div>
+        </div>
+
+        <p class="hintline">১০০% অফলাইন — কোনো ইন্টারনেট বা হোস্টিং লাগে না। ডেটা এই ডিভাইসেই থাকে; ব্যাকআপের জন্য <b>রপ্তানি</b> ব্যবহার করুন।</p>
+      </div>
+    </aside>
+
+    <section class="bank">
+      <div class="toolbar">
+        <span class="count"><b id="shownCount">০</b> / <span id="totalCount">০</span> প্রশ্ন</span>
+        <span class="spacer"></span>
+        <button class="btn small sel-btn" id="btnSelectAll" type="button">সব নির্বাচন</button>
+        <button class="btn small sel-btn" id="btnClear" type="button">বাতিল</button>
+        <button class="btn small primary sel-btn" id="btnBlueprint" type="button">অটো-নির্বাচন</button>
+      </div>
+      <div class="list" id="list"></div>
+    </section>
+
+    <aside class="cart panel" id="cartPanel">
+      <div class="cart-head">
+        <b>প্রশ্নপত্র</b>
+        <span class="total"><strong id="cartMarks">০</strong> নম্বর</span>
+        <button class="icon close" id="btnCloseCart" type="button" title="বন্ধ">✕</button>
+      </div>
+
+      <div class="cart-body">
+        <ul class="cart-list" id="cartList"></ul>
+        <div class="cart-empty" id="cartEmpty">এখনো কোনো প্রশ্ন নির্বাচন করা হয়নি।<br>তালিকা থেকে প্রশ্নে ক্লিক করুন, অথবা <b>অটো-নির্বাচন</b> চাপুন।</div>
+
+        <details class="settings" id="cartSettings">
+          <summary>প্রশ্নপত্রের সেটিংস</summary>
+          <label class="fld"><span>শিরোনাম</span><input id="sTitle" type="text"></label>
+          <label class="fld"><span>প্রতিষ্ঠান / পরীক্ষার নাম</span><input id="sExam" type="text" placeholder="যেমন: বার্ষিক পরীক্ষা ২০২৬"></label>
+          <div class="row2">
+            <label class="fld"><span>শ্রেণি</span><input id="sClass" type="text"></label>
+            <label class="fld"><span>বিষয়</span><input id="sSubject" type="text"></label>
+          </div>
+          <div class="row2">
+            <label class="fld"><span>সময়</span><input id="sTime" type="text" placeholder="২ ঘণ্টা"></label>
+            <label class="fld"><span>তারিখ</span><input id="sDate" type="text" placeholder="০৮ নভেম্বর ২০২৬"></label>
+          </div>
+          <label class="fld"><span>নির্দেশনা (প্রতি লাইনে একটি)</span><textarea id="sInstr" rows="3"></textarea></label>
+          <label class="check"><input id="sKey" type="checkbox"> উত্তরমালা সংযুক্ত করো</label>
+          <label class="check"><input id="sGroup" type="checkbox"> ধরন অনুযায়ী সাজাও</label>
+        </details>
+      </div>
+
+      <div class="cart-actions">
+        <button class="btn" id="btnDraft" type="button">খসড়া সংরক্ষণ</button>
+        <button class="btn primary" id="btnPreview" type="button">প্রিভিউ</button>
+        <button class="btn wide" id="btnPrint" type="button">প্রিন্ট / PDF</button>
+      </div>
+    </aside>
+  </main>
+</div>
+</div>
+
+<div class="cartbar" id="cartbar">
+  <div class="info"><b id="barCount">০</b> প্রশ্ন · <b id="barMarks">০</b> নম্বর</div>
+  <button class="btn primary" id="btnOpenCart" type="button">প্রশ্নপত্র দেখুন</button>
+</div>
+
+<div class="backdrop" id="backdrop" hidden></div>
+<div id="printArea"></div>
+
+<!-- preview -->
+<div class="modal" id="previewModal" hidden>
+  <div class="modal-card wide">
+    <div class="modal-head">
+      <b>প্রশ্নপত্র প্রিভিউ</b>
+      <span class="spacer"></span>
+      <button class="btn small" id="btnLineMode" type="button">▦ লাইন</button>
+      <button class="btn small" id="btnPreviewEdit" type="button">✎ সম্পাদনা</button>
+      <button class="btn small" id="btnPrint2" type="button">প্রিন্ট / PDF</button>
+      <button class="icon" data-close type="button" title="বন্ধ">✕</button>
+    </div>
+    <div class="modal-body preview-wrap" id="previewBody">
+      <div class="pe-bar" id="peBar" hidden>
+        <div class="pe-head">
+          <b>সম্পাদনা মোড</b>
+          <span>লেখা বদলাতে সরাসরি ক্লিক করুন · প্রশ্নের গঠন বদলাতে ✎ চাপুন</span>
+        </div>
+        <div class="row2">
+          <label class="fld"><span>প্রতিষ্ঠানের নাম</span><input id="peInstitute" type="text"></label>
+          <label class="fld"><span>পরীক্ষার নাম</span><input id="peExam" type="text"></label>
+        </div>
+        <label class="fld"><span>শিরোনাম</span><input id="peTitle" type="text"></label>
+        <div class="row2">
+          <label class="fld"><span>শ্রেণি</span><input id="peClass" type="text"></label>
+          <label class="fld"><span>বিষয়</span><input id="peSubject" type="text"></label>
+        </div>
+        <div class="row2">
+          <label class="fld"><span>সময়</span><input id="peTime" type="text"></label>
+          <label class="fld"><span>তারিখ</span><input id="peDate" type="text"></label>
+        </div>
+        <label class="fld" style="margin-bottom:0"><span>নির্দেশনা (প্রতি লাইনে একটি)</span><textarea id="peInstr" rows="3"></textarea></label>
+      </div>
+      <div id="previewPaper"></div>
+    </div>
+  </div>
+</div>
+
+<!-- blueprint -->
+<div class="modal" id="blueprintModal" hidden>
+  <div class="modal-card narrow">
+    <div class="modal-head">
+      <b>অটো-নির্বাচন</b>
+      <span class="spacer"></span>
+      <button class="icon" data-close type="button" title="বন্ধ">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin:0 0 10px;color:var(--muted);font-size:12.5px">বর্তমান ফিল্টার থেকে র্যান্ডমভাবে প্রশ্ন বেছে নেওয়া হবে।</p>
+      <p id="bpAvail" style="margin:0 0 12px;font-size:12px;color:var(--accent-2)"></p>
+      <div class="row2">
+        <label class="fld"><span>MCQ</span><input id="bpMcq" type="number" min="0" value="10"></label>
+        <label class="fld"><span>শূন্যস্থান</span><input id="bpFill" type="number" min="0" value="0"></label>
+        <label class="fld"><span>শুদ্ধ/অশুদ্ধ</span><input id="bpTf" type="number" min="0" value="0"></label>
+        <label class="fld"><span>মিলকরণ</span><input id="bpMatch" type="number" min="0" value="0"></label>
+        <label class="fld"><span>জ্ঞানমূলক</span><input id="bpK" type="number" min="0" value="4"></label>
+        <label class="fld"><span>অনুধাবনমূলক</span><input id="bpKh" type="number" min="0" value="4"></label>
+        <label class="fld"><span>সৃজনশীল</span><input id="bpCq" type="number" min="0" value="2"></label>
+      </div>
+      <label class="check"><input id="bpReplace" type="checkbox" checked> আগের নির্বাচন মুছে নতুন করে সাজাও</label>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close type="button">বাতিল</button>
+      <button class="btn primary" id="btnRunBlueprint" type="button">তৈরি করো</button>
+    </div>
+  </div>
+</div>
+
+<!-- question form -->
+<div class="modal" id="formModal" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <b id="formTitle">নতুন প্রশ্ন</b>
+      <span class="spacer"></span>
+      <button class="icon" data-close type="button" title="বন্ধ">✕</button>
+    </div>
+    <div class="modal-body" id="formBody"></div>
+    <div class="modal-foot">
+      <button class="btn" data-close type="button">বাতিল</button>
+      <button class="btn primary" id="formSave" type="button">সংরক্ষণ</button>
+    </div>
+  </div>
+</div>
+
+<!-- drafts -->
+<div class="modal" id="draftsModal" hidden>
+  <div class="modal-card narrow">
+    <div class="modal-head">
+      <b>সংরক্ষিত খসড়া</b>
+      <span class="spacer"></span>
+      <button class="icon" data-close type="button" title="বন্ধ">✕</button>
+    </div>
+    <div class="modal-body" id="draftsBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<noscript>
+  <p style="padding:20px;font-family:sans-serif">এই অ্যাপটি চালাতে ব্রাউজারে JavaScript চালু রাখতে হবে।</p>
+</noscript>
+
+<script id="seed" type="application/json">__SEED__</script>
+<script>
+/*__JS__*/
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+[
+  {"id": "8/science/1", "class_name": "8", "subject": "science", "chapter": "1", "title": "প্রাণিজগৎ", "ord": 1, "prereqs": []},
+  {"id": "8/science/2", "class_name": "8", "subject": "science", "chapter": "2", "title": "উদ্ভিদজগৎ", "ord": 2, "prereqs": ["8/science/1"]},
+  {"id": "8/science/3", "class_name": "8", "subject": "science", "chapter": "3", "title": "কোষ বিভাজন", "ord": 3, "prereqs": ["8/science/2"]},
+  {"id": "8/math/1", "class_name": "8", "subject": "math", "chapter": "1", "title": "প্যাটার্ন", "ord": 1, "prereqs": []},
+  {"id": "8/math/2", "class_name": "8", "subject": "math", "chapter": "2", "title": "মুনাফা", "ord": 2, "prereqs": ["8/math/1"]},
+  {"id": "8/math/3", "class_name": "8", "subject": "math", "chapter": "3", "title": "পরিমাপ", "ord": 3, "prereqs": ["8/math/2"]}
+]
